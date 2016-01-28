@@ -80,7 +80,6 @@ var StickyDiv = React.createClass({
     },
     checkHeight: function checkHeight() {
         var height = this.refs.original.getBoundingClientRect().height;
-        console.log("height:", height);
         if (this.state.height !== height) {
             this.setState({
                 height: height
