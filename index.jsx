@@ -27,33 +27,41 @@ var StickyDiv = React.createClass({
     propTypes:{
         offsetTop: React.PropTypes.number,
         zIndex: React.PropTypes.number,
-        className: React.PropTypes.string
+        className: React.PropTypes.string,
+        containerBottom: React.PropTypes.number
     },
     getInitialState : function(){
         return {
             fix: false,
-            width: null
+            width: null,
+            height: null
         };
     },
     getDefaultProps: function() {
         return {
             offsetTop: 0,
             className: '',
-            zIndex: 9999
+            zIndex: 9999,
+            containerBottom: null
         };
     },
     handleResize : function(){
         this.checkWidth();
-        this.checkPositions();
+        var height = this.checkHeight();
+        this.checkPositions(height);
     },
     onScroll: function () {
         this.checkWidth();
-        this.checkPositions();
+        var height = this.checkHeight();
+        this.checkPositions(height);
     },
-    checkPositions: function(){
+    checkPositions: function(height) {
         var pos = util.findPosRelativeToViewport(ReactDOM.findDOMNode(this));
+        var top = pos[1];
 
-        if (pos[1]<=this.props.offsetTop){
+        if (top<=this.props.offsetTop && (
+            !this.props.containerBottom || height < (this.props.containerBottom - top)
+        )){
             this.setState({fix: true});
         } else {
             this.setState({fix: false});
@@ -72,18 +80,36 @@ var StickyDiv = React.createClass({
             });
         }
     },
+    checkHeight: function () {
+        var height = this.refs.original.getBoundingClientRect().height;
+        console.log('height:', height);
+        if (this.state.height !== height) {
+            this.setState({
+                height: height
+            });
+        }
+        return height;
+    },
     componentDidMount: function () {
         this.checkWidth();
+        this.checkHeight();
     },
     render: function () {
         var divStyle;
 
         if (this.state.fix) {
+            var top = this.props.offsetTop;
+            if (this.props.containerBottom) {
+                if (top + this.state.height > this.props.containerBottom) {
+                    top = this.props.containerBottom - this.state.height;
+                }
+            }
+
             divStyle = {
                 display: 'block',
                 position: 'fixed',
                 width: this.state.width ? (this.state.width + 'px') : null,
-                top: this.props.offsetTop
+                top: top
             };
             return <div style={{zIndex : this.props.zIndex, position:'relative', width:'100%'}}>
                 <div ref='duplicate' key='duplicate' style={{visibility:'hidden'}}>
